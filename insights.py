@@ -78,7 +78,7 @@ def generate_insight(question: str, df: pd.DataFrame, y_col: str) -> str:
 
     try:
         response = get_groq_client().chat.completions.create(
-            model = "llama-3.3-70b-versatile",
+            model       = "llama-3.3-70b-versatile",
             messages    = [
                 {"role": "system", "content": _INSIGHT_SYSTEM},
                 {"role": "user",   "content": user_msg},

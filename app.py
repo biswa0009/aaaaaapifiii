@@ -1,16 +1,22 @@
 """
-app.py  (v2)
-------------
-Conversational BI Dashboard — Streamlit entry point.
+app.py  (v4  —  PowerBI-style BI Dashboard)
+--------------------------------------------
+Full layout:
 
-New in v2
-  ✦ Tabbed layout: Dashboard | Data Explorer | About
-  ✦ AI-generated plain-English insights (insights.py)
-  ✦ Session-based query history with re-run (history.py)
-  ✦ CSV / PNG / JSON export buttons (exports.py)
-  ✦ Data Explorer: filterable, searchable raw-data browser
+SIDEBAR
+  ⚙  Settings (API key)
+  🎛  Filters   (region · category · payment · date range)
+  🎨  Customize (palette · dark mode · chart type · top-N · labels · sort)
+  ⚡  Quick Questions
+  🕑  Recent Queries
 
-Run with:
+MAIN AREA  (tabs)
+  📊 Dashboard   — multi-chart (primary + pie + trend + table)
+                    AI insight · drill-down · export
+  🔍 Data Explorer
+  ℹ️  About
+
+Run:
     streamlit run app.py
 """
 
@@ -24,66 +30,71 @@ from chart_generator import build_chart, get_summary_stats
 from insights        import generate_insight
 from history         import ensure_history, add_to_history, render_history_sidebar
 from exports         import render_export_row
+from filters         import init_filters, render_filter_panel, get_where_clause, \
+                            inject_filters, get_filter_summary
+from dashboard       import generate_dashboard, get_drilldown_sql
+from themes          import PALETTES
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Page config  (must be the FIRST Streamlit call)
+# Page config  (MUST be first Streamlit call)
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title = "BI Dashboard · AI-Powered",
+    page_title = "AI · Business Intelligence",
     page_icon  = "📊",
     layout     = "wide",
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CSS
+# CSS  — shared styles
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* ── Header gradient ─────────────────────────────────────── */
-.main-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1.4rem 2rem;
-    border-radius: 14px;
-    color: white;
-    margin-bottom: 1.2rem;
+/* ── Header ─────────────────────────── */
+.bi-header {
+    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    padding:1.3rem 2rem; border-radius:14px; color:#fff; margin-bottom:1rem;
 }
-.main-header h1 { margin: 0; font-size: 1.7rem; letter-spacing: -0.3px; }
-.main-header p  { margin: 0.3rem 0 0; opacity: 0.85; font-size: 0.9rem; }
+.bi-header h1 { margin:0; font-size:1.65rem; letter-spacing:-.3px; }
+.bi-header p  { margin:.25rem 0 0; opacity:.85; font-size:.88rem; }
 
-/* ── KPI metric cards ────────────────────────────────────── */
+/* ── KPI cards ──────────────────────── */
 div[data-testid="metric-container"] {
-    background: #f8f9ff;
-    border: 1px solid #e0e4f5;
-    border-radius: 10px;
-    padding: 0.4rem 0.8rem;
+    background:#f8f9ff; border:1px solid #e0e4f5;
+    border-radius:10px; padding:.4rem .8rem;
 }
 
-/* ── Insight card ────────────────────────────────────────── */
+/* ── Insight card ───────────────────── */
 .insight-card {
-    background: linear-gradient(135deg, #f0f4ff 0%, #faf0ff 100%);
-    border-left: 4px solid #764ba2;
-    border-radius: 0 10px 10px 0;
-    padding: 0.9rem 1.2rem;
-    margin: 0.8rem 0 1rem;
-    font-size: 0.97rem;
-    color: #2d2d4e;
-    line-height: 1.65;
+    background:linear-gradient(135deg,#f0f4ff 0%,#faf0ff 100%);
+    border-left:4px solid #764ba2; border-radius:0 10px 10px 0;
+    padding:.9rem 1.2rem; margin:.8rem 0 1rem;
+    font-size:.95rem; color:#2d2d4e; line-height:1.7;
 }
 
-/* ── SQL box ─────────────────────────────────────────────── */
+/* ── Drilldown card ─────────────────── */
+.drill-card {
+    background:#f0fff4; border-left:4px solid #38a169;
+    border-radius:0 10px 10px 0;
+    padding:.7rem 1rem; margin:.5rem 0;
+    font-size:.88rem; color:#1a4731;
+}
+
+/* ── SQL box ─────────────────────────── */
 .sql-box {
-    background: #1e1e2e;
-    color: #cdd6f4;
-    border-radius: 8px;
-    padding: 0.8rem 1rem;
-    font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    font-size: 0.82rem;
-    white-space: pre-wrap;
-    word-break: break-all;
+    background:#1e1e2e; color:#cdd6f4;
+    border-radius:8px; padding:.8rem 1rem;
+    font-family:'JetBrains Mono','Fira Code',monospace;
+    font-size:.8rem; white-space:pre-wrap; word-break:break-all;
 }
 
-/* ── Hide Streamlit chrome ───────────────────────────────── */
-#MainMenu, footer { visibility: hidden; }
+/* ── Section heading ─────────────────── */
+.section-title {
+    font-size:1rem; font-weight:700; color:#4a4a7a;
+    letter-spacing:.3px; margin:.8rem 0 .4rem;
+    text-transform:uppercase;
+}
+
+#MainMenu, footer { visibility:hidden; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -91,232 +102,412 @@ div[data-testid="metric-container"] {
 # Session state bootstrap
 # ─────────────────────────────────────────────────────────────────────────────
 ensure_history()
+init_filters()
+
+for key, default in [
+    ("last_result",        None),
+    ("auto_execute",       False),
+    ("prefill_question",   ""),
+    ("chart_type_override", None),
+    ("drill_result",       None),
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Database  (cached across reruns for the whole session)
+# Database (cached for session)
 # ─────────────────────────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="Loading 50,000 rows into database…")
+@st.cache_resource(show_spinner="Loading 50 000 rows into database…")
 def get_db_connection():
     return init_db()
 
 conn = get_db_connection()
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Load full dataset for filters (cached)
+# ─────────────────────────────────────────────────────────────────────────────
+@st.cache_data(show_spinner=False)
+def load_full_df() -> pd.DataFrame:
+    return pd.read_csv("dataset.csv", parse_dates=["order_date"])
+
+full_df = load_full_df()
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Header
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div class="main-header">
-  <h1>📊 Conversational BI Dashboard</h1>
-  <p>Ask a business question in plain English — get an instant interactive chart, AI insight, and export.</p>
+<div class="bi-header">
+  <h1>📊 AI Business Intelligence Dashboard</h1>
+  <p>Natural language → multi-chart dashboard · drill-down · live filters · PowerBI-style analytics</p>
 </div>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Sidebar
+# SIDEBAR
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
 
-    # API key
-    st.header("Settings")
-    api_key_input = st.text_input(
-        "Groq API Key",
-        type        = "password",
-        placeholder = "gsk_...  (or set GROQ_API_KEY env var)",
-        help        = "Free key at https://console.groq.com",
+    # ── ⚙️ Settings ──────────────────────────────────────────────────────────
+    st.header("⚙️ Settings")
+    api_key = st.text_input(
+        "Groq API Key", type="password",
+        placeholder="gsk_...  (or set GROQ_API_KEY env var)",
+        help="Free key at https://console.groq.com",
     )
-    if api_key_input.strip():
-        os.environ["GROQ_API_KEY"] = api_key_input.strip()
+    if api_key.strip():
+        os.environ["GROQ_API_KEY"] = api_key.strip()
 
     st.divider()
 
-    # Example questions
-    st.subheader("Example Questions")
-    example_questions = [
+    # ── 🎛️ Filters ───────────────────────────────────────────────────────────
+    render_filter_panel(full_df)
+
+    st.divider()
+
+    # ── 🎨 Customize ─────────────────────────────────────────────────────────
+    st.subheader("🎨 Customize Charts")
+
+    palette_name = st.selectbox(
+        "Color Theme", list(PALETTES.keys()), index=0, key="cust_palette"
+    )
+    dark_mode = st.toggle("🌙 Dark Mode", value=False, key="cust_dark")
+
+    chart_types = ["auto", "bar", "line", "pie", "area", "scatter", "histogram"]
+    manual_type = st.selectbox(
+        "Chart Type", chart_types,
+        index=0, key="cust_type",
+        help="'auto' uses the AI recommendation",
+    )
+
+    top_n = st.slider("Top N rows", 0, 30, 0, key="cust_topn",
+                      help="0 = show all")
+    show_labels = st.toggle("Show Data Labels", value=True, key="cust_labels")
+    sort_asc    = st.toggle("Sort Ascending",  value=False, key="cust_sort")
+
+    def get_customization() -> dict:
+        return {
+            "palette"    : st.session_state.get("cust_palette", "Bold"),
+            "dark_mode"  : st.session_state.get("cust_dark", False),
+            "top_n"      : st.session_state.get("cust_topn", 0),
+            "show_labels": st.session_state.get("cust_labels", True),
+            "sort_asc"   : st.session_state.get("cust_sort", False),
+        }
+
+    st.divider()
+
+    # ── ⚡ Quick Questions ────────────────────────────────────────────────────
+    st.subheader("⚡ Quick Questions")
+    st.caption("One click — runs instantly")
+
+    QUICK_QUESTIONS = [
         "What is the total revenue by product category?",
         "Show monthly revenue trend for 2023",
         "Which region generates the most revenue?",
-        "What is the revenue share by payment method?",
+        "Revenue share by payment method",
         "Show average rating per product category",
-        "What are the top 5 categories by quantity sold?",
-        "Compare average discount percentage by region",
+        "Top 5 categories by quantity sold",
+        "Compare average discount by region",
         "Show total revenue by month in 2022",
-        "Which payment method has the highest average order value?",
-        "What is the average quantity sold per product category?",
+        "Which payment method has the highest order value?",
+        "Revenue breakdown by region and category",
     ]
-    for eq in example_questions:
-        if st.button(eq, use_container_width=True, key=f"ex_{eq}"):
-            st.session_state["prefill_question"] = eq
+    for q in QUICK_QUESTIONS:
+        if st.button(q, use_container_width=True, key=f"qq_{q}"):
+            st.session_state["prefill_question"] = q
+            st.session_state["auto_execute"]     = True
+            st.rerun()
 
     st.divider()
 
-    # Query history
-    st.subheader("Recent Queries")
+    # ── 🕑 History ────────────────────────────────────────────────────────────
+    st.subheader("🕑 Recent Queries")
     rerun_q = render_history_sidebar()
     if rerun_q:
         st.session_state["prefill_question"] = rerun_q
+        st.session_state["auto_execute"]     = True
+        st.rerun()
 
     st.divider()
-
-    # Dataset info
-    st.subheader("Dataset Info")
-    st.markdown(f"""
-- **Table:** `{TABLE_NAME}`
-- **Rows:** 50,000
-- **Columns:** 13
-- **Period:** 2022 – 2023
-    """)
+    st.subheader("📋 Dataset")
+    st.markdown(f"**Table:** `{TABLE_NAME}` · 50 000 rows · 13 cols · 2022–2023")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Tabs
+# MAIN TABS
 # ─────────────────────────────────────────────────────────────────────────────
 tab_dash, tab_explorer, tab_about = st.tabs(
     ["📊 Dashboard", "🔍 Data Explorer", "ℹ️ About"]
 )
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1  ·  DASHBOARD
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_dash:
 
-    prefill = st.session_state.pop("prefill_question", "")
+    prefill      = st.session_state.pop("prefill_question", "")
+    auto_execute = st.session_state.pop("auto_execute", False)
 
     question = st.text_input(
-        label            = "Ask a business question",
-        value            = prefill,
-        placeholder      = "e.g. What is the total revenue by product category?",
-        label_visibility = "collapsed",
-        key              = "question_input",
+        "question", value=prefill,
+        placeholder="e.g. Show revenue by region …",
+        label_visibility="collapsed",
+        key="q_input",
     )
 
-    col_ask, col_clear = st.columns([6, 1])
-    with col_ask:
-        ask_btn = st.button(
-            "🔍  Generate Chart", type="primary", use_container_width=True
-        )
-    with col_clear:
-        if st.button("🗑️", use_container_width=True, help="Clear input"):
+    col_run, col_clr = st.columns([7, 1])
+    with col_run:
+        run_btn = st.button("🔍  Generate Dashboard", type="primary",
+                            use_container_width=True)
+    with col_clr:
+        if st.button("🗑️", use_container_width=True, help="Clear"):
+            st.session_state["last_result"]  = None
+            st.session_state["drill_result"] = None
             st.rerun()
 
-    # Guard: API key present?
-    def _check_api_key() -> bool:
+    should_run = (run_btn and question.strip()) or (auto_execute and question.strip())
+
+    # ── API key guard ──────────────────────────────────────────────────────
+    def _need_key() -> bool:
         if not os.environ.get("GROQ_API_KEY", "").strip():
-            st.error(
-                "No Groq API key found. "
-                "Paste it in the sidebar or set the GROQ_API_KEY environment variable."
-            )
-            return False
-        return True
+            st.error("Set your Groq API key in the sidebar.")
+            return True
+        return False
 
-    # ── Main generation flow ──────────────────────────────────────────────────
-    if ask_btn and question.strip():
-
-        if not _check_api_key():
+    # ── Pipeline ───────────────────────────────────────────────────────────
+    if should_run:
+        if _need_key():
             st.stop()
 
-        # 4-stage progress bar
-        progress = st.progress(0, text="Sending question to Groq…")
+        cust    = get_customization()
+        where   = get_where_clause()
+        flt_ctx = get_filter_summary()
 
-        # Stage 1 – LLM
+        prog = st.progress(0, text="🤖 Asking Groq…")
+
+        # Stage 1: LLM
         try:
-            chart_meta = ask_groq(question)
+            chart_meta = ask_groq(question, filter_context=flt_ctx)
         except ValueError as e:
-            progress.empty()
-            st.error(f"**LLM Error:** {e}")
+            prog.empty(); st.error(f"**LLM Error:** {e}"); st.stop()
+
+        # Stage 2: SQL (inject filters into LLM SQL)
+        prog.progress(30, text="🗄️ Running SQL…")
+        raw_sql = chart_meta["sql_query"]
+        sql     = inject_filters(raw_sql)
+        df, err = run_query(conn, sql)
+
+        if err:
+            prog.empty()
+            st.error(f"**DB Error:** {err}")
+            with st.expander("Generated SQL"):
+                st.code(sql, language="sql")
             st.stop()
 
-        progress.progress(40, text="Executing SQL on dataset…")
-
-        # Stage 2 – SQL
-        sql_query  = chart_meta["sql_query"]
-        df, db_err = run_query(conn, sql_query)
-
-        if db_err:
-            progress.empty()
-            st.error(f"**Database Error:** {db_err}")
-            with st.expander("Generated SQL (debug)"):
-                st.code(sql_query, language="sql")
-            st.stop()
-
-        progress.progress(70, text="Building Plotly chart…")
-
-        # Stage 3 – Chart
+        # Stage 3: Multi-chart dashboard
+        prog.progress(55, text="📊 Building charts…")
         try:
-            fig = build_chart(df, chart_meta)
-        except ValueError as e:
-            progress.empty()
-            st.error(f"**Chart Error:** {e}")
-            with st.expander("Raw query result"):
-                st.dataframe(df)
-            st.stop()
+            panels = generate_dashboard(conn, df, chart_meta, where, cust)
+        except Exception as e:
+            prog.empty(); st.error(f"**Chart Error:** {e}"); st.stop()
 
-        progress.progress(85, text="Generating AI insight…")
-
-        # Stage 4 – Insight (non-blocking)
+        # Stage 4: Insight
+        prog.progress(82, text="🧠 Generating insight…")
         insight = generate_insight(question, df, chart_meta.get("y_axis", ""))
 
-        progress.progress(100, text="Done!")
-        progress.empty()
+        prog.progress(100, text="✅ Done!"); prog.empty()
 
-        # Persist to session history
+        # Persist
+        st.session_state["last_result"] = {
+            "question"  : question,
+            "chart_meta": chart_meta,
+            "df"        : df,
+            "panels"    : panels,
+            "insight"   : insight,
+            "sql"       : sql,
+        }
+        st.session_state["drill_result"]       = None
+        st.session_state["chart_type_override"] = None
         add_to_history(question, chart_meta, df, insight)
 
-        # ── Render results ────────────────────────────────────────────────────
-        st.success("Chart generated successfully!")
-        st.markdown(f"### \"{question}\"")
+    elif run_btn and not question.strip():
+        st.warning("Type a question first.")
 
-        # KPI metrics row
-        stats = get_summary_stats(df, chart_meta.get("y_axis", ""))
+    # ── Render ─────────────────────────────────────────────────────────────
+    result = st.session_state.get("last_result")
+
+    if result:
+        cust       = get_customization()
+        chart_meta = result["chart_meta"]
+        df         = result["df"]
+        panels     = result["panels"]
+        x_col      = chart_meta["x_axis"]
+        y_col      = chart_meta["y_axis"]
+
+        st.success("✅ Dashboard generated!")
+        st.markdown(f"### 💬 \"{result['question']}\"")
+
+        # ── Manual chart-type selector ──────────────────────────────────────
+        CTYPE_ICONS = {
+            "auto": "🤖 Auto", "bar": "📊 Bar", "line": "📈 Line",
+            "pie": "🥧 Pie", "area": "🏔 Area",
+            "scatter": "⚪ Scatter", "histogram": "📉 Histogram",
+        }
+        sel_label = st.radio(
+            "chart_selector", list(CTYPE_ICONS.values()),
+            index=0, horizontal=True, label_visibility="collapsed",
+            key="chart_radio",
+        )
+        override = {v: k for k, v in CTYPE_ICONS.items()}.get(sel_label, "auto")
+        override = None if override == "auto" else override
+
+        # ── KPI cards ───────────────────────────────────────────────────────
+        stats = get_summary_stats(df, y_col)
         if stats:
             kpi_cols = st.columns(len(stats))
-            for col_w, (label, val) in zip(kpi_cols, stats.items()):
-                col_w.metric(label, val)
+            for col_w, (lbl, val) in zip(kpi_cols, stats.items()):
+                col_w.metric(lbl, val)
 
         st.divider()
 
-        # Interactive chart
-        st.plotly_chart(fig, use_container_width=True)
+        # ── Chart grid ──────────────────────────────────────────────────────
+        # Re-build panels if customization or override changed
+        if override or cust != st.session_state.get("_last_cust"):
+            st.session_state["_last_cust"] = cust
+            try:
+                cust_for_panels = {**cust}
+                panels = generate_dashboard(conn, df, chart_meta,
+                                            get_where_clause(), cust_for_panels)
+                # Apply override to panel 0 (primary)
+                if override and panels:
+                    from dashboard import _build, _trim
+                    from themes import get_palette
+                    palette = get_palette(cust["palette"])
+                    df0     = _trim(df.copy(), y_col, cust["top_n"], cust["sort_asc"])
+                    panels[0]["fig"] = _build(
+                        df0, x_col, y_col, override,
+                        palette, cust["dark_mode"],
+                        chart_meta.get("title", ""), cust["show_labels"]
+                    )
+            except Exception:
+                pass  # keep existing panels on error
 
-        # AI insight card
-        if insight:
+        # Layout: 2 columns for up to 4 panels
+        panel_pairs = [panels[i:i+2] for i in range(0, len(panels), 2)]
+        for pair in panel_pairs:
+            cols = st.columns(len(pair))
+            for col_w, panel in zip(cols, pair):
+                with col_w:
+                    st.plotly_chart(panel["fig"], use_container_width=True,
+                                    key=f"chart_{panel['panel_id']}")
+
+        # ── Data table (always shown as last panel) ──────────────────────────
+        with st.expander(f"📋 Data Table  ({len(df):,} rows)"):
+            st.dataframe(
+                df.sort_values(by=y_col, ascending=False)
+                  .reset_index(drop=True),
+                use_container_width=True, hide_index=True,
+            )
+
+        # ── AI Insight ──────────────────────────────────────────────────────
+        if result["insight"]:
             st.markdown(
                 f'<div class="insight-card">'
-                f'<strong>AI Insight</strong><br><br>{insight}'
+                f'<strong>💡 AI Insight</strong><br><br>{result["insight"]}'
                 f'</div>',
                 unsafe_allow_html=True,
             )
 
-        # Export buttons
-        render_export_row(df, fig, chart_meta, question)
+        st.divider()
 
-        # Collapsible debug sections
-        with st.expander("Generated SQL"):
+        # ── Drill-Down ──────────────────────────────────────────────────────
+        st.markdown('<p class="section-title">🔍 Drill Down</p>',
+                    unsafe_allow_html=True)
+
+        drill_options = df[x_col].dropna().unique().tolist()
+        if drill_options:
+            drill_col_a, drill_col_b = st.columns([3, 1])
+            with drill_col_a:
+                selected_val = st.selectbox(
+                    f"Pick a {x_col.replace('_',' ')} to drill into",
+                    options=["— Select —"] + [str(v) for v in drill_options],
+                    key="drill_select",
+                )
+            with drill_col_b:
+                drill_btn = st.button("🔍 Drill", use_container_width=True,
+                                      key="drill_go")
+
+            if drill_btn and selected_val != "— Select —":
+                drill_info = get_drilldown_sql(
+                    x_col, selected_val, y_col, get_where_clause()
+                )
+                if drill_info:
+                    drill_sql, breakdown_col = drill_info
+                    drill_df, drill_err = run_query(conn, drill_sql)
+                    if drill_err:
+                        st.error(f"Drill-down error: {drill_err}")
+                    else:
+                        from dashboard import _build, _trim
+                        from themes import get_palette
+                        palette   = get_palette(cust["palette"])
+                        drill_df2 = _trim(drill_df.copy(), y_col,
+                                          cust["top_n"], cust["sort_asc"])
+                        drill_fig = _build(
+                            drill_df2, breakdown_col, y_col, "bar",
+                            palette, cust["dark_mode"],
+                            f"{x_col.replace('_',' ').title()}: {selected_val} → by {breakdown_col.replace('_',' ').title()}",
+                            cust["show_labels"],
+                        )
+                        st.session_state["drill_result"] = {
+                            "fig"     : drill_fig,
+                            "df"      : drill_df,
+                            "label"   : selected_val,
+                            "x"       : breakdown_col,
+                            "y"       : y_col,
+                            "sql"     : drill_sql,
+                        }
+                else:
+                    st.info("No drill-down path defined for this dimension.")
+
+        # Render drill-down result
+        dr = st.session_state.get("drill_result")
+        if dr:
             st.markdown(
-                f'<div class="sql-box">{sql_query}</div>',
+                f'<div class="drill-card">'
+                f'Drilled into <strong>{dr["label"]}</strong> → '
+                f'breakdown by <strong>{dr["x"].replace("_"," ")}</strong>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
+            st.plotly_chart(dr["fig"], use_container_width=True, key="drill_chart")
+            with st.expander("Drill-Down Data"):
+                st.dataframe(dr["df"], use_container_width=True, hide_index=True)
+            with st.expander("Drill-Down SQL"):
+                st.code(dr["sql"], language="sql")
 
-        with st.expander(f"Raw Data  ({len(df):,} rows)"):
-            st.dataframe(df, use_container_width=True, hide_index=True)
+        st.divider()
 
-        with st.expander("LLM Decision"):
+        # ── Export + SQL ─────────────────────────────────────────────────────
+        if panels:
+            render_export_row(df, panels[0]["fig"], chart_meta, result["question"])
+
+        with st.expander("🔎 Generated SQL"):
+            st.markdown(f'<div class="sql-box">{result["sql"]}</div>',
+                        unsafe_allow_html=True)
+
+        with st.expander("🧠 LLM Decision"):
             st.table(pd.DataFrame([{
-                "Chart Type": chart_meta["chart_type"],
-                "X Axis"    : chart_meta["x_axis"],
-                "Y Axis"    : chart_meta["y_axis"],
+                "Title"     : chart_meta.get("title", ""),
+                "Chart Type": chart_meta.get("chart_type", ""),
+                "X Axis"    : chart_meta.get("x_axis", ""),
+                "Y Axis"    : chart_meta.get("y_axis", ""),
             }]))
 
-    elif ask_btn and not question.strip():
-        st.warning("Please enter a question before clicking Generate Chart.")
-
-    else:
-        # Empty state placeholder
+    elif not should_run:
         st.markdown("""
-        <div style="text-align:center; padding:3rem 1rem; color:#999;">
-            <div style="font-size:3.5rem">📊</div>
-            <h3 style="color:#666; margin-top:0.5rem">Ready for your question</h3>
-            <p>Type a question above, pick an example from the sidebar,<br>
-               or re-run a past query from <em>Recent Queries</em>.</p>
+        <div style="text-align:center;padding:3rem 1rem;color:#999">
+          <div style="font-size:4rem">📊</div>
+          <h3 style="color:#666;margin-top:.5rem">Ready for your question</h3>
+          <p>Type a question above, or tap a <strong>Quick Question</strong>
+             in the sidebar to generate your dashboard instantly.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -325,101 +516,59 @@ with tab_dash:
 # TAB 2  ·  DATA EXPLORER
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_explorer:
-    st.subheader("Explore the Raw Dataset")
-    st.caption("Browse, filter and search the full 50,000-row sales table.")
+    st.subheader("🔍 Explore the Raw Dataset")
+    st.caption("Browse, filter and search all 50 000 rows.")
 
-    @st.cache_data(show_spinner="Loading dataset…")
-    def load_full_df() -> pd.DataFrame:
-        return pd.read_csv("dataset.csv", parse_dates=["order_date"])
+    with st.expander("🎛️ Filters", expanded=True):
+        fe1, fe2, fe3, fe4 = st.columns(4)
+        with fe1:
+            sel_cat = st.selectbox("Category",
+                ["All"] + sorted(full_df["product_category"].unique()),
+                key="ex_cat")
+        with fe2:
+            sel_reg = st.selectbox("Region",
+                ["All"] + sorted(full_df["customer_region"].unique()),
+                key="ex_reg")
+        with fe3:
+            sel_pay = st.selectbox("Payment",
+                ["All"] + sorted(full_df["payment_method"].unique()),
+                key="ex_pay")
+        with fe4:
+            lo = float(full_df["total_revenue"].min())
+            hi = float(full_df["total_revenue"].max())
+            rev_range = st.slider("Revenue", lo, hi, (lo, hi), step=50.0, key="ex_rev")
 
-    full_df = load_full_df()
+    flt = full_df.copy()
+    if sel_cat != "All": flt = flt[flt["product_category"] == sel_cat]
+    if sel_reg != "All": flt = flt[flt["customer_region"]  == sel_reg]
+    if sel_pay != "All": flt = flt[flt["payment_method"]   == sel_pay]
+    flt = flt[(flt["total_revenue"] >= rev_range[0]) & (flt["total_revenue"] <= rev_range[1])]
 
-    # Filter controls
-    with st.expander("Filters", expanded=True):
-        f1, f2, f3, f4 = st.columns(4)
-
-        with f1:
-            categories = ["All"] + sorted(full_df["product_category"].unique().tolist())
-            sel_cat = st.selectbox("Product Category", categories)
-
-        with f2:
-            regions = ["All"] + sorted(full_df["customer_region"].unique().tolist())
-            sel_reg = st.selectbox("Customer Region", regions)
-
-        with f3:
-            methods = ["All"] + sorted(full_df["payment_method"].unique().tolist())
-            sel_pay = st.selectbox("Payment Method", methods)
-
-        with f4:
-            min_rev = float(full_df["total_revenue"].min())
-            max_rev = float(full_df["total_revenue"].max())
-            rev_range = st.slider(
-                "Total Revenue Range",
-                min_value = round(min_rev),
-                max_value = round(max_rev),
-                value     = (round(min_rev), round(max_rev)),
-                step      = 50,
-            )
-
-    # Apply filters
-    filtered = full_df.copy()
-    if sel_cat != "All":
-        filtered = filtered[filtered["product_category"] == sel_cat]
-    if sel_reg != "All":
-        filtered = filtered[filtered["customer_region"] == sel_reg]
-    if sel_pay != "All":
-        filtered = filtered[filtered["payment_method"] == sel_pay]
-    filtered = filtered[
-        (filtered["total_revenue"] >= rev_range[0]) &
-        (filtered["total_revenue"] <= rev_range[1])
-    ]
-
-    # Text search
-    search = st.text_input(
-        "Search across all text columns",
-        placeholder = "e.g.  Books,  Asia,  UPI …"
-    )
-    if search.strip():
-        mask = filtered.astype(str).apply(
-            lambda col: col.str.contains(search.strip(), case=False, na=False)
+    srch = st.text_input("🔎 Search", placeholder="Books, Asia, UPI…", key="ex_srch")
+    if srch.strip():
+        mask = flt.astype(str).apply(
+            lambda c: c.str.contains(srch.strip(), case=False, na=False)
         ).any(axis=1)
-        filtered = filtered[mask]
+        flt = flt[mask]
 
-    # Summary metrics
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Rows shown",   f"{len(filtered):,}")
-    m2.metric("Total Revenue", f"${filtered['total_revenue'].sum():,.0f}")
-    m3.metric("Avg Rating",
-              f"{filtered['rating'].mean():.2f}" if len(filtered) else "—")
-    m4.metric("Avg Discount",
-              f"{filtered['discount_percent'].mean():.1f}%" if len(filtered) else "—")
+    m1.metric("Rows",          f"{len(flt):,}")
+    m2.metric("Total Revenue", f"${flt['total_revenue'].sum():,.0f}")
+    m3.metric("Avg Rating",    f"{flt['rating'].mean():.2f}" if len(flt) else "—")
+    m4.metric("Avg Discount",  f"{flt['discount_percent'].mean():.1f}%" if len(flt) else "—")
 
     st.divider()
 
-    # Column picker
-    all_cols     = list(full_df.columns)
-    default_cols = [
-        "order_id", "order_date", "product_category",
-        "customer_region", "quantity_sold", "total_revenue", "rating"
-    ]
-    sel_cols = st.multiselect("Columns to display", all_cols, default=default_cols)
-    show_cols = sel_cols if sel_cols else all_cols
+    dcols = ["order_id","order_date","product_category","customer_region",
+             "quantity_sold","total_revenue","rating"]
+    sel_cols = st.multiselect("Columns", list(full_df.columns), default=dcols, key="ex_cols")
+    st.dataframe(flt[sel_cols or list(full_df.columns)].reset_index(drop=True),
+                 use_container_width=True, hide_index=True, height=450)
 
-    # Table
-    st.dataframe(
-        filtered[show_cols].reset_index(drop=True),
-        use_container_width = True,
-        hide_index          = True,
-        height              = 450,
-    )
-
-    # Download filtered CSV
-    csv_bytes = filtered[show_cols].to_csv(index=False).encode("utf-8")
     st.download_button(
-        label     = "⬇️ Download Filtered CSV",
-        data      = csv_bytes,
-        file_name = "filtered_data.csv",
-        mime      = "text/csv",
+        "⬇️ Download CSV",
+        data=flt[sel_cols or list(full_df.columns)].to_csv(index=False).encode(),
+        file_name="filtered_data.csv", mime="text/csv",
     )
 
 
@@ -427,102 +576,85 @@ with tab_explorer:
 # TAB 3  ·  ABOUT
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_about:
-    st.subheader("About this app")
+    st.subheader("ℹ️ About this dashboard")
+    cl, cr = st.columns([3, 2])
 
-    col_l, col_r = st.columns([3, 2])
-
-    with col_l:
+    with cl:
         st.markdown("""
-### How it works
-
-1. **You** type a business question in plain English.
-2. **Groq** (`llama3-70b-8192`) converts it to a structured JSON containing an
-   SQL query, chart type, and axis names.
-3. **Python** executes the SQL safely on a local SQLite database
-   loaded from `dataset.csv`.
-4. **Plotly** renders an interactive chart (bar / line / pie).
-5. **Groq** generates a 3-5 sentence business insight from the result.
-6. Everything is displayed in **Streamlit** with KPI cards, export buttons,
-   and a session-scoped query history.
-
----
-
-### Workflow
+### Architecture
 
 ```
 User question
       │
       ▼
-  Groq LLM  ──►  JSON { sql, chart_type, x, y }
+  Filters (sidebar) ──► filter context hint for LLM
+      │
+      ▼
+  Groq LLM  ──►  JSON { sql, chart_type, x, y, title }
+                   │
+           inject_filters(sql)
                    │
                    ▼
-           SQLite execution
+            SQLite execution
                    │
                    ▼
-           pandas DataFrame
+         pandas DataFrame
                    │
-           ┌───────┴────────┐
-           ▼                ▼
-      Plotly chart     Groq Insight
-           │                │
-           └───────┬────────┘
+         generate_dashboard()
+           │       │        │
+        Bar/Pie  Trend   (more panels)
+           │       │        │
+           └───────┴────────┘
+                   │
+         Groq AI Insight
+                   │
                    ▼
-        KPIs · Chart · Insight · Exports
+       KPIs · Charts · Insight
+       Drill-down · Exports
 ```
 
----
-
-### Project files
-
+### Files
 | File | Role |
 |---|---|
-| `app.py` | Streamlit UI & orchestration |
-| `llm.py` | Groq API call + JSON parsing |
-| `database.py` | SQLite init + safe query execution |
-| `chart_generator.py` | Plotly bar / line / pie builder |
-| `insights.py` | AI plain-English insight generator |
-| `history.py` | Session query history manager |
-| `exports.py` | CSV / PNG / JSON download buttons |
+| `app.py` | Streamlit UI, orchestration |
+| `llm.py` | Groq API + JSON parsing |
+| `database.py` | SQLite + safe queries |
+| `dashboard.py` | Multi-chart generator + drill-down |
+| `chart_generator.py` | Single chart builder |
+| `filters.py` | Filter panel + SQL injection |
+| `themes.py` | Colour palettes + layouts |
+| `insights.py` | AI insight writer |
+| `history.py` | Query history |
+| `exports.py` | CSV/PNG/JSON downloads |
         """)
 
-    with col_r:
+    with cr:
         st.markdown("""
 ### Tech stack
-
 | Layer | Technology |
 |---|---|
 | UI | Streamlit |
-| LLM | Groq · llama3-70b-8192 |
-| Data | pandas |
-| Database | SQLite (stdlib) |
+| LLM | Groq · llama-3.3-70b-versatile |
 | Charts | Plotly Express |
+| Data | pandas |
+| DB | SQLite (stdlib) |
 
----
-
-### Dataset schema
-
-| Column | Type |
+### Colour themes
+| Theme | Description |
 |---|---|
-| `order_id` | INTEGER |
-| `order_date` | TEXT |
-| `product_category` | TEXT |
-| `price` | REAL |
-| `discount_percent` | REAL |
-| `quantity_sold` | INTEGER |
-| `customer_region` | TEXT |
-| `payment_method` | TEXT |
-| `rating` | REAL |
-| `review_count` | INTEGER |
-| `discounted_price` | REAL |
-| `total_revenue` | REAL |
+| Bold | High-contrast default |
+| Vivid | Saturated modern |
+| Pastel | Soft presentation |
+| Dark24 | 24 distinct dark hues |
+| Set3 | Colorbrewer Set3 |
+| Neon | Electric glow palette |
 
----
+### Chart types
+Bar · Line · Pie/Donut · Area · Scatter · Histogram
 
-### Example questions
-
-- Total revenue by product category
-- Monthly revenue trend for 2023
-- Revenue share by payment method
-- Average rating per category
-- Top 5 categories by quantity sold
+### Dataset
+50 000 orders · 13 columns · 2022–2023
+Categories: Books, Fashion, Sports, Beauty,
+Electronics, Home & Kitchen
+Regions: North America, Asia, Europe, Middle East
         """)
