@@ -103,8 +103,9 @@ with st.sidebar:
     )
 
     # ── API key ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">API Configuration</div>',
-                unsafe_allow_html=True)
+    st.markdown('''<div class="sb-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        API Configuration</div>''', unsafe_allow_html=True)
     api_key = st.text_input(
         "Groq API Key", type="password",
         placeholder="gsk_...  (or set GROQ_API_KEY env var)",
@@ -123,23 +124,24 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Analytics quick questions ─────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">Analytics</div>',
-                unsafe_allow_html=True)
+    st.markdown('''<div class="sb-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics</div>''', unsafe_allow_html=True)
 
     QUICK_ANALYTICS = [
-        "Revenue by product category",
-        "Revenue by customer region",
-        "Monthly revenue trend 2023",
-        "Revenue share by payment method",
-        "Average rating per category",
-        "Top 5 categories by quantity sold",
-        "Average discount percentage by region",
-        "Total revenue by month in 2022",
-        "Highest avg order value by payment method",
-        "Revenue breakdown by region and category",
+        ("Revenue by product category",      ":material/inventory_2:"),
+        ("Revenue by customer region",       ":material/language:"),
+        ("Monthly revenue trend 2023",       ":material/monitoring:"),
+        ("Revenue share by payment method",  ":material/wallet:"),
+        ("Average rating per category",      ":material/reviews:"),
+        ("Top 5 categories by quantity sold", ":material/leaderboard:"),
+        ("Average discount percentage by region", ":material/local_offer:"),
+        ("Total revenue by month in 2022",    ":material/event_note:"),
+        ("Highest avg order value by payment method", ":material/monetization_on:"),
+        ("Revenue breakdown by region and category",   ":material/hub:"),
     ]
-    for q in QUICK_ANALYTICS:
-        if st.button(f"{q}", use_container_width=True, key=f"qq_{q}"):
+    for q, icon in QUICK_ANALYTICS:
+        if st.button(f"{q}", icon=icon, use_container_width=True, key=f"qq_{q}"):
             st.session_state["prefill_question"] = q
             st.session_state["auto_execute"]     = True
             st.rerun()
@@ -147,8 +149,9 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Chart Style ───────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">Chart Style</div>',
-                unsafe_allow_html=True)
+    st.markdown('''<div class="sb-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Z"/><circle cx="12" cy="9" r="3"/></svg>
+        Chart Style</div>''', unsafe_allow_html=True)
     st.selectbox(
         "Color Theme", list(PALETTES.keys()), index=0,
         key="cust_palette", label_visibility="collapsed",
@@ -163,23 +166,26 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Data Controls ─────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">Data Controls</div>',
-                unsafe_allow_html=True)
+    st.markdown('''<div class="sb-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="10" y1="8" x2="14" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg>
+        Data Controls</div>''', unsafe_allow_html=True)
     st.slider("Top N  (0 = show all)", 0, 30, 0, key="cust_topn")
     st.toggle("Sort Ascending", value=False, key="cust_sort")
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Filters ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">Filters</div>',
-                unsafe_allow_html=True)
+    st.markdown('''<div class="sb-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        Filters</div>''', unsafe_allow_html=True)
     render_filter_panel(full_df)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Recent queries ────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">Recent Queries</div>',
-                unsafe_allow_html=True)
+    st.markdown('''<div class="sb-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        Recent Queries</div>''', unsafe_allow_html=True)
     rerun_q = render_history_sidebar()
     if rerun_q:
         st.session_state["prefill_question"] = rerun_q

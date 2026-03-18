@@ -1,52 +1,4 @@
-DARK_VARS = '''
-  --bg-base: #050505; 
-  --bg-gradient: radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.08), transparent 25%), radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
-  --bg-card: rgba(15, 15, 15, 0.6); 
-  --bg-card2: rgba(22, 22, 22, 0.7); 
-  --bg-input: rgba(20, 20, 20, 0.8); 
-  --border: rgba(255, 255, 255, 0.08); 
-  --border-lite: rgba(255, 255, 255, 0.04); 
-  --primary: #8B5CF6; 
-  --primary-dark: #7C3AED; 
-  --primary-glow: rgba(139, 92, 246, 0.4); 
-  --success: #10B981; 
-  --warning: #F59E0B; 
-  --danger: #EF4444; 
-  --cyan: #06B6D4; 
-  --purple: #A855F7; 
-  --text: #EDEDED; 
-  --text-muted: #A1A1AA; 
-  --text-dim: #71717A; 
-  --shadow-sm: 0 4px 24px -1px rgba(0,0,0,0.4); 
-  --shadow-md: 0 8px 32px -1px rgba(0,0,0,0.5); 
-  --sidebar-bg: rgba(10, 10, 10, 0.65);
-  --glass-blur: blur(16px);
-'''
-
-LIGHT_VARS = '''
-  --bg-base: #F4F4F8;
-  --bg-gradient: radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.06), transparent 30%), radial-gradient(circle at 85% 30%, rgba(147, 51, 234, 0.06), transparent 30%);
-  --bg-card: rgba(255, 255, 255, 0.95); 
-  --bg-card2: rgba(241, 241, 247, 0.95); 
-  --bg-input: #ffffff; 
-  --border: rgba(0, 0, 0, 0.10); 
-  --border-lite: rgba(0, 0, 0, 0.05); 
-  --primary: #7C3AED; 
-  --primary-dark: #6D28D9; 
-  --primary-glow: rgba(124, 58, 237, 0.25); 
-  --success: #059669; 
-  --warning: #D97706; 
-  --danger: #DC2626; 
-  --cyan: #0891B2; 
-  --purple: #9333EA; 
-  --text: #1a1a2e; 
-  --text-muted: #44445a; 
-  --text-dim: #888899; 
-  --shadow-sm: 0 4px 24px -1px rgba(0,0,0,0.07); 
-  --shadow-md: 0 8px 32px -1px rgba(0,0,0,0.10); 
-  --sidebar-bg: rgba(255, 255, 255, 0.92);
-  --glass-blur: blur(16px);
-'''
+from themes import THEME_VARS
 
 BASE_CSS = '''
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
@@ -97,15 +49,27 @@ section[data-testid='stSidebar'] .stButton > button {
   width: 100% !important; text-align: left !important; justify-content: flex-start !important;
   padding: 10px 16px !important; background: transparent !important; border-color: transparent !important;
   border-radius: var(--radius-sm) !important; transition: var(--transition) !important;
-  color: var(--text-muted) !important; font-size: 13px !important; font-weight: 500 !important;
+  color: var(--text-muted) !important; font-size: 13.5px !important; font-weight: 500 !important;
   height: auto !important; min-height: 0 !important;
+  display: flex !important; align-items: center !important; gap: 14px !important;
 }
 section[data-testid='stSidebar'] .stButton > button p {
-  text-align: left !important; margin: 0 !important; width: 100% !important; color: var(--text-muted) !important;
+  text-align: left !important; margin: 0 !important; color: var(--text-muted) !important; 
+  line-height: 1.4 !important;
+}
+section[data-testid='stSidebar'] .stButton > button span[data-testid="stWidgetLabel"] {
+  display: flex !important; align-items: center !important; gap: 14px !important;
+}
+/* Reduce Material icon size in sidebar */
+section[data-testid='stSidebar'] .stButton > button span[data-testid="stIconMaterial"] {
+  font-size: 1.2rem !important; opacity: 0.7 !important; transition: var(--transition) !important;
 }
 section[data-testid='stSidebar'] .stButton > button:hover {
   background: var(--bg-card2) !important; border-color: var(--border) !important; color: var(--text) !important;
-  transform: translateX(4px) !important;
+  transform: translateX(6px) !important;
+}
+section[data-testid='stSidebar'] .stButton > button:hover span[data-testid="stIconMaterial"] {
+  opacity: 1 !important; color: var(--primary) !important;
 }
 
 .sb-brand {
@@ -125,10 +89,12 @@ section[data-testid='stSidebar'] .stButton > button:hover {
 .sb-brand-sub { font-size: 12px; color: var(--text-muted) !important; font-weight: 500; }
 
 .sb-section-label { 
+  display: flex !important; align-items: center !important; gap: 12px !important;
   font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; 
   color: var(--text-dim) !important; text-transform: uppercase; 
-  padding: 16px 20px 10px; margin-top: 8px;
+  padding: 24px 20px 12px; margin-top: 8px;
 }
+.sb-section-label svg { opacity: 0.5; stroke: var(--text-dim); }
 
 /* ── Query bar ───────────────────────────────────────────── */
 .query-bar-wrapper {
@@ -204,7 +170,7 @@ section[data-testid='stSidebar'] .stButton > button:hover {
 }
 .stButton > button:hover {
   border-color: var(--primary) !important;
-  background: rgba(124, 58, 237, 0.07) !important;
+  background: var(--primary-07) !important;
   color: var(--primary) !important;
   transform: translateY(-2px) !important;
 }
@@ -269,7 +235,7 @@ section[data-testid='stSidebar'] .stButton > button:hover {
 [data-baseweb="select"] div { color: var(--text) !important; }
 [data-baseweb="menu"] { background: var(--bg-card) !important; border: 1px solid var(--border) !important; border-radius: var(--radius-md) !important; }
 [data-baseweb="menu"] li { color: var(--text) !important; }
-[data-baseweb="menu"] li:hover { background: rgba(124, 58, 237, 0.08) !important; }
+[data-baseweb="menu"] li:hover { background: var(--primary-08) !important; }
 
 /* ── Toggle / checkbox ───────────────────────────────────── */
 [data-testid="stToggle"] label span,
@@ -318,13 +284,13 @@ section[data-testid='stSidebar'] .stButton > button:hover {
 }
 .chart-card:hover, div[data-testid='metric-container']:hover {
   box-shadow: var(--shadow-md) !important;
-  border-color: rgba(124,58,237,0.2) !important;
+  border-color: var(--primary-20) !important;
   transform: translateY(-4px) !important;
 }
 .chart-card { padding: 24px 24px 12px; margin-bottom: 24px; }
 .chart-card-header { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
 .chart-card-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; color: var(--text) !important; }
-.chart-card-badge { font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 10px; border-radius: 20px; background: rgba(124, 58, 237, 0.1); color: var(--primary); border: 1px solid rgba(124, 58, 237, 0.2); text-transform: uppercase; }
+.chart-card-badge { font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 10px; border-radius: 20px; background: var(--primary-10); color: var(--primary); border: 1px solid var(--primary-20); text-transform: uppercase; }
 
 div[data-testid='metric-container'] { padding: 24px !important; position: relative; overflow: hidden; }
 div[data-testid='metric-container'] [data-testid='stMetricLabel'] { font-size: 11px !important; font-weight: 700 !important; letter-spacing: 1.2px !important; text-transform: uppercase !important; color: var(--text-muted) !important; }
@@ -336,16 +302,16 @@ div[data-testid='metric-container'] [data-testid='stMetricValue'] { font-size: 3
 
 /* ── Insight / Anomaly cards ─────────────────────────────── */
 .insight-card {
-  background: linear-gradient(145deg, rgba(124, 58, 237, 0.07), rgba(124, 58, 237, 0.01));
-  border: 1px solid rgba(124, 58, 237, 0.2); border-left: 4px solid var(--primary);
+  background: linear-gradient(145deg, var(--primary-07), var(--primary-01));
+  border: 1px solid var(--primary-20); border-left: 4px solid var(--primary);
   border-radius: var(--radius-md); padding: 28px 32px; margin: 24px 0;
-  box-shadow: 0 10px 30px -5px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 10px 30px -5px var(--primary-08);
 }
 .anomaly-card {
-  background: linear-gradient(145deg, rgba(217, 119, 6, 0.07), rgba(217, 119, 6, 0.01));
-  border: 1px solid rgba(217, 119, 6, 0.2); border-left: 4px solid var(--warning);
+  background: linear-gradient(145deg, var(--warning-07), var(--warning-01));
+  border: 1px solid var(--warning-20); border-left: 4px solid var(--warning);
   border-radius: var(--radius-md); padding: 24px 28px; margin: 20px 0;
-  box-shadow: 0 10px 30px -5px rgba(217, 119, 6, 0.08);
+  box-shadow: 0 10px 30px -5px var(--warning-08);
 }
 .insight-body, .anomaly-item { font-size: 15px; line-height: 1.8; color: var(--text) !important; font-weight: 400; letter-spacing: -0.2px; }
 .insight-title { color: var(--primary) !important; font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; }
@@ -361,14 +327,14 @@ div[data-testid='metric-container'] [data-testid='stMetricValue'] { font-size: 3
 
 /* ── Empty state ─────────────────────────────────────────── */
 .empty-state { padding: 100px 24px; text-align: center; }
-.empty-icon { font-size: 64px; animation: float 6s ease-in-out infinite; filter: drop-shadow(0 0 24px rgba(124, 58, 237, 0.4)); margin-bottom: 24px; color: var(--primary) !important; }
+.empty-icon { font-size: 64px; animation: float 6s ease-in-out infinite; filter: drop-shadow(0 0 24px var(--primary-glow)); margin-bottom: 24px; color: var(--primary) !important; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
 .empty-title { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--text) !important; margin-bottom: 12px; }
 .empty-sub { font-size: 16px; color: var(--text-muted) !important; max-width: 480px; margin: 0 auto; line-height: 1.6; }
 
 /* ── Chips ───────────────────────────────────────────────── */
 .chip { background: var(--bg-card2); border: 1px solid var(--border); border-radius: 32px; padding: 8px 20px; font-size: 13.5px; margin: 6px; display: inline-block; transition: var(--transition); font-weight: 600; cursor: pointer; color: var(--text-muted); }
-.chip:hover { border-color: var(--primary); background: rgba(124, 58, 237, 0.08); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15); }
+.chip:hover { border-color: var(--primary); background: var(--primary-08); color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px var(--primary-15); }
 
 /* ── Progress ────────────────────────────────────────────── */
 .stProgress > div > div > div > div { background: linear-gradient(90deg, var(--primary), var(--primary-dark)) !important; border-radius: 8px !important; }
@@ -409,8 +375,27 @@ hr { border-color: var(--border) !important; margin: 32px 0 !important; opacity:
 '''
 
 def get_css(theme: str = "dark") -> str:
-    v = DARK_VARS if theme == "dark" else LIGHT_VARS
-    return f"<style>:root{{{v}}}{BASE_CSS}</style>"
+    vars_dict = THEME_VARS.get(theme, THEME_VARS["dark"])
+    # Construct the variable string with !important to overpower everything
+    v_str = "\n".join([f"  --{k}: {v} !important;" for k, v in vars_dict.items()])
+    
+    # AGGRESSIVE LOCK: Force these variables onto the root, body, and all theme-aware attrs.
+    # We also force color-scheme to ignore the browser preference.
+    forced_vars = f"""
+:root, html, body, [data-theme], [data-testid="stAppViewContainer"], 
+[data-theme="light"], [data-theme="dark"] {{
+    color-scheme: {theme} !important;
+    {v_str}
+}}
+/* Override any system preference media queries by redeclaring our variables inside them */
+@media (prefers-color-scheme: light) {{
+    :root, html, body, [data-testid="stAppViewContainer"] {{ {v_str} }}
+}}
+@media (prefers-color-scheme: dark) {{
+    :root, html, body, [data-testid="stAppViewContainer"] {{ {v_str} }}
+}}
+"""
+    return f"<style>{forced_vars}{BASE_CSS}</style>"
 
-# Backwards-compat alias used by old code
+# Backwards-compat
 CSS = get_css("dark")

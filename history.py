@@ -83,15 +83,26 @@ def render_history_sidebar() -> str | None:
     for i, entry in enumerate(history):
         q         = entry["question"]
         ts        = entry["timestamp"]
-        ct        = entry["chart_meta"].get("chart_type", "?")
-        icon      = {"bar": "📊", "line": "📈", "pie": "🥧"}.get(ct, "📊")
-        short_q   = q if len(q) <= 42 else q[:39] + "…"
+        meta      = entry.get("chart_meta", {})
+        ct        = meta.get("chart_type", "")
+
+        # Map chart types to modern material icons
+        icon_name = {
+            "bar": "bar_chart",
+            "line": "show_chart",
+            "pie": "pie_chart",
+            "area": "area_chart",
+            "scatter": "scatter_plot"
+        }.get(ct, "analytics")
+        
+        short_q = q if len(q) <= 42 else q[:39] + "…"
 
         col_label, col_btn = st.columns([5, 1])
         with col_label:
             st.markdown(
-                f"<small style='color:#888'>{ts}</small><br>"
-                f"{icon} <span style='font-size:0.85rem'>{short_q}</span>",
+                f"<small style='color:var(--text-dim)'>{ts}</small><br>"
+                f"<span style='display:flex; align-items:center; gap:12px; font-size:0.85rem; color:var(--text)'>"
+                f":material/{icon_name}: {short_q}</span>",
                 unsafe_allow_html=True,
             )
         with col_btn:
@@ -100,7 +111,7 @@ def render_history_sidebar() -> str | None:
 
         st.divider()
 
-    if st.button("🗑️ Clear History", use_container_width=True):
+    if st.button("Clear History", icon=":material/delete:", use_container_width=True):
         clear_history()
         st.rerun()
 

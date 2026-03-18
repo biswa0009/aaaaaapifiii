@@ -37,7 +37,7 @@ def render_filter_panel(full_df: pd.DataFrame) -> None:
     init_filters()
     f = st.session_state["bi_filters"]
 
-    st.subheader("🎛️ Filters")
+    st.markdown('<div style="font-size:14px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:16px">:material/filter_list: Filters</div>', unsafe_allow_html=True)
 
     # Region
     regions = sorted(full_df["customer_region"].dropna().unique())
@@ -86,12 +86,12 @@ def render_filter_panel(full_df: pd.DataFrame) -> None:
     # Status badge + reset
     n = _count_active(f)
     if n:
-        st.caption(f"🔴 {n} filter{'s' if n > 1 else ''} active")
-        if st.button("↺ Reset Filters", use_container_width=True, key="filt_reset"):
+        st.markdown(f'<div style="font-size:12px; color:var(--primary); margin:8px 0">:material/info: {n} filter{"s" if n > 1 else ""} active</div>', unsafe_allow_html=True)
+        if st.button("Reset Filters", icon=":material/refresh:", use_container_width=True, key="filt_reset"):
             st.session_state["bi_filters"] = _DEFAULTS.copy()
             st.rerun()
     else:
-        st.caption("✅ No filters — showing all data")
+        st.markdown('<div style="font-size:12px; color:var(--text-dim); margin:8px 0">:material/check_circle: All data shown</div>', unsafe_allow_html=True)
 
 
 # ── WHERE clause builder ──────────────────────────────────────────────────────

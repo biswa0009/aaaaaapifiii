@@ -68,14 +68,14 @@ def detect_anomalies(
 def format_anomaly_html(a: dict, y_col: str) -> str:
     """Return an HTML string describing one anomaly for display."""
     y_label   = y_col.replace("_", " ").title()
-    arrow     = "▲" if a["direction"] == "above" else "▼"
+    icon      = ":material/trending_up:" if a["direction"] == "above" else ":material/trending_down:"
     sign      = "+" if a["pct_vs_mean"] >= 0 else ""
-    color     = "#F59E0B" if a["direction"] == "above" else "#06B6D4"
+    color     = "var(--primary)" if a["direction"] == "above" else "var(--info)"
     return (
-        f'<span style="color:{color}">{arrow}</span> '
+        f'<span style="color:{color}; font-size:18px; vertical-align:middle">{icon}</span> '
         f'<strong>{a["label"]}</strong> — {y_label}: '
         f'<strong>{a["value"]:,.0f}</strong> &nbsp;'
-        f'<span style="color:{color};font-size:11px">'
+        f'<span style="color:var(--text-dim); font-size:11px">'
         f'({sign}{a["pct_vs_mean"]}% vs avg · z={a["z_score"]})</span>'
     )
 
@@ -89,34 +89,34 @@ def get_followup_suggestions(x_col: str, y_col: str) -> list[tuple[str, str]]:
 
     MAP = {
         "customer_region": [
-            ("📅", f"monthly {y} trend by region"),
-            ("📦", "product category breakdown by region"),
-            ("💳", "payment method preference by region"),
+            (":material/calendar_today:", f"monthly {y} trend by region"),
+            (":material/inventory_2:", "product category breakdown by region"),
+            (":material/payments:", "payment method preference by region"),
         ],
         "product_category": [
-            ("📅", f"monthly trend for each product category"),
-            ("🌍", "which region buys each category the most"),
-            ("⭐", "average rating comparison by product category"),
+            (":material/monitoring:", f"monthly trend for each product category"),
+            (":material/public:", "which region buys each category the most"),
+            (":material/star:", "average rating comparison by product category"),
         ],
-        "payment_method": [
-            ("📊", f"{y} by product category per payment method"),
-            ("📅", "monthly payment method trend"),
-            ("🌍", "payment method distribution by region"),
+        "payment_type": [
+            (":material/bar_chart:", f"{y} by product category per payment method"),
+            (":material/show_chart:", "monthly payment method trend"),
+            (":material/language:", "payment method distribution by region"),
         ],
         "month": [
-            ("📊", f"which category drove the most {y} this year"),
-            ("🌍", "compare regional performance by month"),
-            ("💳", "payment method trends over time"),
+            (":material/analytics:", f"which category drove the most {y} this year"),
+            (":material/explore:", "compare regional performance by month"),
+            (":material/wallet:", "payment method trends over time"),
         ],
         "order_date": [
-            ("📅", f"monthly {y} aggregated by month"),
-            ("📊", "category performance over time"),
-            ("🌍", "regional revenue growth over time"),
+            (":material/calendar_month:", f"monthly {y} aggregated by month"),
+            (":material/leaderboard:", "category performance over time"),
+            (":material/hub:", "regional revenue growth over time"),
         ],
     }
     default = [
-        ("🔍", f"compare {x_col.replace('_',' ')} performance by region"),
-        ("📅", f"monthly trend of {y}"),
-        ("🏆", f"top 5 by {y}"),
+        (":material/search:", f"compare {x_col.replace('_',' ')} performance by region"),
+        (":material/show_chart:", f"monthly trend of {y}"),
+        (":material/workspace_premium:", f"top 5 by {y}"),
     ]
     return MAP.get(x_col, default)
