@@ -1,14 +1,18 @@
 """
-themes.py
----------
-Color palettes and layout presets for every chart in the dashboard.
-All chart builders import from here so themes stay consistent.
+themes.py  (v6)
+---------------
+Color palettes and Plotly layout presets.
+"BI" is the new default palette using the brand color system.
 """
 
 import plotly.express as px
 
-# ── Named palettes ────────────────────────────────────────────────────────────
 PALETTES: dict[str, list[str]] = {
+    "BI"    : [
+        "#6366F1", "#22C55E", "#F59E0B", "#EF4444",
+        "#06B6D4", "#A855F7", "#F97316", "#14B8A6",
+        "#8B5CF6", "#EC4899",
+    ],
     "Bold"  : px.colors.qualitative.Bold,
     "Vivid" : px.colors.qualitative.Vivid,
     "Pastel": px.colors.qualitative.Pastel,
@@ -20,57 +24,46 @@ PALETTES: dict[str, list[str]] = {
     ],
 }
 
-# ── Dark-mode palette overrides ───────────────────────────────────────────────
-_DARK_BG    = "#0e1117"
-_DARK_GRID  = "rgba(255,255,255,0.07)"
-_DARK_FONT  = "#e0e0e0"
-_DARK_HOVER = "#1a1a2e"
 
-_LIGHT_BG    = "rgba(0,0,0,0)"
-_LIGHT_GRID  = "rgba(150,150,150,0.18)"
-_LIGHT_FONT  = "#2d2d4e"
-_LIGHT_HOVER = "#1e1e2e"
-
-
-# ── Public: layout dict for update_layout() ───────────────────────────────────
 def get_layout(dark: bool = False, title: str = "") -> dict:
-    """
-    Return a Plotly layout dict.
-    Pass directly to fig.update_layout(**get_layout(...)).
-    """
-    bg    = _DARK_BG    if dark else _LIGHT_BG
-    grid  = _DARK_GRID  if dark else _LIGHT_GRID
-    font  = _DARK_FONT  if dark else _LIGHT_FONT
-    hover = _DARK_HOVER if dark else _LIGHT_HOVER
+    """Return Plotly layout dict for update_layout(**get_layout(...))."""
+    # Always transparent background so it inherits the page theme
+    bg   = "rgba(0,0,0,0)"
+    grid = "rgba(255,255,255,0.07)" if dark else "rgba(0,0,0,0.06)"
+    font = "#e0e0e0"              if dark else "#374151"
+    hover= "#1a1a2e"              if dark else "#1e293b"
 
     return dict(
-        title         = dict(text=title, font=dict(size=15, color=font), x=0.03),
+        title         = dict(text=title, font=dict(size=14, color=font), x=0.02),
         font          = dict(family="Inter, system-ui, sans-serif", size=12, color=font),
         plot_bgcolor  = bg,
         paper_bgcolor = bg,
-        hoverlabel    = dict(bgcolor=hover, font_color="white", font_size=13),
-        margin        = dict(t=55, b=60, l=60, r=30),
+        hoverlabel    = dict(bgcolor=hover, font_color="white", font_size=13,
+                             bordercolor="rgba(255,255,255,0.1)"),
+        margin        = dict(t=20, b=55, l=55, r=20),
         legend        = dict(
-            bgcolor     = "rgba(30,30,30,0.5)" if dark else "rgba(255,255,255,0.85)",
-            bordercolor = "rgba(255,255,255,0.15)" if dark else "rgba(0,0,0,0.1)",
+            bgcolor     = "rgba(0,0,0,0.05)" if not dark else "rgba(255,255,255,0.05)",
+            bordercolor = "rgba(0,0,0,0.08)" if not dark else "rgba(255,255,255,0.08)",
             borderwidth = 1,
-            font        = dict(color=font),
+            font        = dict(color=font, size=11),
         ),
         xaxis = dict(
             showgrid   = False,
             tickangle  = -30,
             color      = font,
-            title_font = dict(color=font, size=12),
-            linecolor  = "rgba(150,150,150,0.3)",
+            title_font = dict(color=font, size=11),
+            linecolor  = "rgba(150,150,150,0.2)",
+            tickfont   = dict(size=11),
         ),
         yaxis = dict(
-            showgrid  = True,
-            gridcolor = grid,
-            color     = font,
-            title_font= dict(color=font, size=12),
+            showgrid   = True,
+            gridcolor  = grid,
+            color      = font,
+            title_font = dict(color=font, size=11),
+            tickfont   = dict(size=11),
         ),
     )
 
 
 def get_palette(name: str) -> list[str]:
-    return PALETTES.get(name, PALETTES["Bold"])
+    return PALETTES.get(name, PALETTES["BI"])

@@ -25,14 +25,22 @@ from themes   import get_layout, get_palette
 
 
 # ── Drill-down dimension map ──────────────────────────────────────────────────
-# When user drills into a value of dimension X, show breakdown by dimension Y
+# Only TRUE categorical columns that exist as real table columns.
+# Time-derived aliases (month, year, order_date) are excluded — their
+# aggregated values ("2022-01") don't match raw order_date rows directly.
 _DRILLDOWN_MAP: dict[str, str] = {
-    "customer_region"  : "product_category",
-    "product_category" : "customer_region",
-    "payment_method"   : "product_category",
-    "order_date"       : "product_category",
-    "month"            : "customer_region",
+    "customer_region" : "product_category",
+    "product_category": "customer_region",
+    "payment_method"  : "product_category",
 }
+_TIME_COLS = {"order_date", "month", "year", "week", "quarter", "date"}
+
+
+def can_drilldown(x_col: str) -> bool:
+    """Return True only when x_col has a valid categorical drill-down path."""
+    if x_col.lower() in _TIME_COLS:
+        return False
+    return x_col in _DRILLDOWN_MAP
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -138,7 +146,7 @@ def _build(
 ) -> go.Figure:
     df = df.copy()
     df[y_col] = pd.to_numeric(df[y_col], errors="coerce")
-    layout    = get_layout(dark=dark, title=title)
+    layout    = get_layout(dark=dark, title="")
     x_label   = _pretty(x_col)
     y_label   = _pretty(y_col)
     hover_tmpl = f"<b>%{{x}}</b><br>{y_label}: %{{y:,.2f}}<extra></extra>"
