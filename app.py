@@ -36,7 +36,7 @@ from anomaly         import detect_anomalies, format_anomaly_html, get_followup_
 
 # ── Page config (MUST be first Streamlit call) ────────────────────────────────
 st.set_page_config(
-    page_title            = "BI Intelligence",
+    page_title            = "DataGPT",
     page_icon             = "■",
     layout                = "wide",
     initial_sidebar_state = "expanded",
@@ -96,7 +96,7 @@ with st.sidebar:
     st.markdown(
         '<div class="sb-brand">'
         '<div class="sb-brand-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>'
-        '<div><div class="sb-brand-name">BI Intelligence</div>'
+        '<div><div class="sb-brand-name">DataGPT</div>'
         '<div class="sb-brand-sub">Modern Analytics</div></div>'
         '</div>',
         unsafe_allow_html=True,
@@ -205,7 +205,7 @@ tc_left, tc_right = st.columns([7, 1])
 with tc_left:
     st.markdown(
         '<div style="padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:24px">'
-        '<div class="page-title">Business Intelligence</div>'
+        '<div class="page-title">DataGPT</div>'
         '<div class="page-subtitle">Natural language → instant charts · drill-down · live filters · anomaly detection</div>'
         '</div>',
         unsafe_allow_html=True,

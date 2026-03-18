@@ -7,7 +7,7 @@ Theme variables and Plotly presets.
 import plotly.express as px
 
 PALETTES: dict[str, list[str]] = {
-    "BI"    : ["#6366F1", "#22C55E", "#F59E0B", "#EF4444", "#06B6D4", "#A855F7", "#F97316", "#14B8A6", "#8B5CF6", "#EC4899"],
+    "DataGPT": ["#6366F1", "#22C55E", "#F59E0B", "#EF4444", "#06B6D4", "#A855F7", "#F97316", "#14B8A6", "#8B5CF6", "#EC4899"],
     "Bold"  : px.colors.qualitative.Bold,
     "Vivid" : px.colors.qualitative.Vivid,
     "Pastel": px.colors.qualitative.Pastel,
@@ -109,4 +109,4 @@ def get_layout(dark: bool = False, title: str = "") -> dict:
     )
 
 def get_palette(name: str) -> list[str]:
-    return PALETTES.get(name, PALETTES["BI"])
+    return PALETTES.get(name, PALETTES["DataGPT"])
