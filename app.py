@@ -37,7 +37,7 @@ from anomaly         import detect_anomalies, format_anomaly_html, get_followup_
 # ── Page config (MUST be first Streamlit call) ────────────────────────────────
 st.set_page_config(
     page_title            = "BI Intelligence",
-    page_icon             = "📊",
+    page_icon             = "■",
     layout                = "wide",
     initial_sidebar_state = "expanded",
 )
@@ -78,7 +78,7 @@ full_df = load_full_df()
 # ── Customization helper ──────────────────────────────────────────────────────
 def get_customization() -> dict:
     # Chart dark mode defaults to match the page theme
-    page_dark = st.session_state.get("app_theme", "dark") == "dark"
+    page_dark = st.session_state.get("app_theme", "light") == "dark"
     return {
         "palette"    : st.session_state.get("cust_palette", "BI"),
         "dark_mode"  : st.session_state.get("cust_dark",    page_dark),
@@ -95,9 +95,9 @@ with st.sidebar:
     # Brand
     st.markdown(
         '<div class="sb-brand">'
-        '<div class="sb-brand-icon">📊</div>'
+        '<div class="sb-brand-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>'
         '<div><div class="sb-brand-name">BI Intelligence</div>'
-        '<div class="sb-brand-sub">AI-Powered Analytics</div></div>'
+        '<div class="sb-brand-sub">Modern Analytics</div></div>'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -123,23 +123,23 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Analytics quick questions ─────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">📈 Analytics</div>',
+    st.markdown('<div class="sb-section-label">Analytics</div>',
                 unsafe_allow_html=True)
 
     QUICK_ANALYTICS = [
-        ("📊", "Revenue by product category"),
-        ("🌍", "Revenue by customer region"),
-        ("📅", "Monthly revenue trend 2023"),
-        ("💳", "Revenue share by payment method"),
-        ("⭐", "Average rating per category"),
-        ("📦", "Top 5 categories by quantity sold"),
-        ("💰", "Average discount percentage by region"),
-        ("🗓",  "Total revenue by month in 2022"),
-        ("🏆", "Highest average order value by payment method"),
-        ("🔀", "Revenue breakdown by region and category"),
+        "Revenue by product category",
+        "Revenue by customer region",
+        "Monthly revenue trend 2023",
+        "Revenue share by payment method",
+        "Average rating per category",
+        "Top 5 categories by quantity sold",
+        "Average discount percentage by region",
+        "Total revenue by month in 2022",
+        "Highest avg order value by payment method",
+        "Revenue breakdown by region and category",
     ]
-    for icon, q in QUICK_ANALYTICS:
-        if st.button(f"{icon}  {q}", use_container_width=True, key=f"qq_{q}"):
+    for q in QUICK_ANALYTICS:
+        if st.button(f"{q}", use_container_width=True, key=f"qq_{q}"):
             st.session_state["prefill_question"] = q
             st.session_state["auto_execute"]     = True
             st.rerun()
@@ -147,7 +147,7 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Chart Style ───────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">🎨 Chart Style</div>',
+    st.markdown('<div class="sb-section-label">Chart Style</div>',
                 unsafe_allow_html=True)
     st.selectbox(
         "Color Theme", list(PALETTES.keys()), index=0,
@@ -155,7 +155,7 @@ with st.sidebar:
     )
     cs1, cs2 = st.columns(2)
     with cs1:
-        dark_default = st.session_state.get("app_theme", "dark") == "dark"
+        dark_default = st.session_state.get("app_theme", "light") == "dark"
         st.toggle("Dark Charts",  value=dark_default, key="cust_dark")
     with cs2:
         st.toggle("Data Labels",  value=True,  key="cust_labels")
@@ -163,7 +163,7 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Data Controls ─────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">🎛 Data Controls</div>',
+    st.markdown('<div class="sb-section-label">Data Controls</div>',
                 unsafe_allow_html=True)
     st.slider("Top N  (0 = show all)", 0, 30, 0, key="cust_topn")
     st.toggle("Sort Ascending", value=False, key="cust_sort")
@@ -171,14 +171,14 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Filters ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">🔍 Filters</div>',
+    st.markdown('<div class="sb-section-label">Filters</div>',
                 unsafe_allow_html=True)
     render_filter_panel(full_df)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
     # ── Recent queries ────────────────────────────────────────────────────────
-    st.markdown('<div class="sb-section-label">🕑 Recent Queries</div>',
+    st.markdown('<div class="sb-section-label">Recent Queries</div>',
                 unsafe_allow_html=True)
     rerun_q = render_history_sidebar()
     if rerun_q:
@@ -206,7 +206,7 @@ with tc_left:
     )
 with tc_right:
     is_dark = (theme == "dark")
-    toggle_label = "☀ Light" if is_dark else "🌙 Dark"
+    toggle_label = "Light Mode" if is_dark else "Dark Mode"
     if st.button(toggle_label, key="theme_toggle", help="Switch theme"):
         st.session_state["app_theme"] = "light" if is_dark else "dark"
         st.rerun()
@@ -222,7 +222,7 @@ with tc_right:
 # TABS
 # ─────────────────────────────────────────────────────────────────────────────
 tab_dash, tab_explorer, tab_about = st.tabs(
-    ["  📊  Dashboard  ", "  🔍  Data Explorer  ", "  ℹ️  About  "]
+    ["Dashboard", "Data Explorer", "About"]
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -236,10 +236,10 @@ with tab_dash:
     # ── Query bar ─────────────────────────────────────────────────────────────
     st.markdown('<div class="query-bar-wrapper">', unsafe_allow_html=True)
     st.markdown(
-        '<div class="query-bar-label">✦ Ask a Business Question</div>',
+        '<div class="query-bar-label">Ask a Business Question</div>',
         unsafe_allow_html=True,
     )
-    qcol, bcol, xcol = st.columns([7, 1.6, 0.6])
+    qcol, bcol, xcol = st.columns([6.5, 2.5, 1.5])
     with qcol:
         question = st.text_input(
             "q", value=prefill,
@@ -249,10 +249,9 @@ with tab_dash:
         )
     with bcol:
         run_btn = st.button(
-            "⚡  Analyze Data", type="primary", use_container_width=True
-        )
+            "Analyze Data", type="primary", use_container_width=True        )
     with xcol:
-        if st.button("✕", use_container_width=True, help="Clear dashboard"):
+        if st.button("Clear", use_container_width=True, help="Clear dashboard"):
             st.session_state["last_result"]  = None
             st.session_state["drill_result"] = None
             st.rerun()
@@ -374,8 +373,7 @@ with tab_dash:
             f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'
             f'<span style="font-size:12px;color:var(--success);background:rgba(16,185,129,.1);'
             f'border:1px solid rgba(16,185,129,.2);border-radius:20px;padding:3px 10px;font-weight:500">'
-            f'✓ Dashboard Ready</span>'
-            f'<span style="font-size:13px;color:var(--text-muted)">'
+            f'Dashboard Ready</span>'            f'<span style="font-size:13px;color:var(--text-muted)">'
             f'<em>{result["question"]}</em></span>'
             f'</div>',
             unsafe_allow_html=True,
@@ -383,13 +381,13 @@ with tab_dash:
 
         # ── Chart-type switcher ───────────────────────────────────────────────
         CTYPE_MAP = {
-            "🤖 Auto"       : None,
-            "📊 Bar"        : "bar",
-            "📈 Line"       : "line",
-            "🥧 Pie"        : "pie",
-            "🏔 Area"       : "area",
-            "⚪ Scatter"    : "scatter",
-            "📉 Histogram"  : "histogram",
+            "Auto": None,
+            "Bar": "bar",
+            "Line": "line",
+            "Pie": "pie",
+            "Area": "area",
+            "Scatter": "scatter",
+            "Histogram": "histogram",
         }
         sel_label = st.radio(
             "ct", list(CTYPE_MAP.keys()),
@@ -402,16 +400,9 @@ with tab_dash:
         # ── KPI metric row ────────────────────────────────────────────────────
         stats = get_summary_stats(df, y_col)
         if stats:
-            ICONS = {
-                "Total"  : "💰",
-                "Average": "📊",
-                "Max"    : "⬆",
-                "Min"    : "⬇",
-                "Rows"   : "📄",
-            }
             kpi_cols = st.columns(len(stats))
             for col_w, (lbl, val) in zip(kpi_cols, stats.items()):
-                col_w.metric(f"{ICONS.get(lbl, '')} {lbl}", val)
+                col_w.metric(lbl, val)
 
         st.markdown('<div style="margin-top:8px"></div>', unsafe_allow_html=True)
 
@@ -468,7 +459,7 @@ with tab_dash:
                     st.markdown("</div>", unsafe_allow_html=True)
 
         # ── Data table ────────────────────────────────────────────────────────
-        with st.expander(f"📋  Data Table  ({len(df):,} rows)"):
+        with st.expander(f"Data Table ({len(df):,} rows)"):
             st.dataframe(
                 df.sort_values(by=y_col, ascending=False).reset_index(drop=True),
                 use_container_width=True,
@@ -479,7 +470,7 @@ with tab_dash:
         if result["insight"]:
             st.markdown(
                 f'<div class="insight-card">'
-                f'<div class="insight-title">💡 AI Insight</div>'
+                f'<div class="insight-title">AI Insight</div>'
                 f'<div class="insight-body">{result["insight"]}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -493,7 +484,7 @@ with tab_dash:
             )
             st.markdown(
                 f'<div class="anomaly-card">'
-                f'<div class="anomaly-title">⚠ Anomaly Detection — {len(anomalies)} unusual value{"s" if len(anomalies) > 1 else ""} found</div>'
+                f'<div class="anomaly-title">Anomaly Detection — {len(anomalies)} unusual value{"s" if len(anomalies) > 1 else ""} found</div>'
                 f'{items_html}'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -504,7 +495,7 @@ with tab_dash:
         if suggestions:
             st.markdown(
                 '<div class="followup-card">'
-                '<div class="followup-title">🔍 Explore Further</div>',
+                '<div class="followup-title">Explore Further</div>',
                 unsafe_allow_html=True,
             )
             sug_cols = st.columns(len(suggestions))
@@ -521,14 +512,14 @@ with tab_dash:
 
         # ── Drill-Down ────────────────────────────────────────────────────────
         st.markdown(
-            '<div class="section-label"><span>🔍</span> Drill-Down Analysis</div>',
+            '<div class="section-label">Drill-Down Analysis</div>',
             unsafe_allow_html=True,
         )
 
         if not can_drilldown(x_col):
             st.markdown(
                 '<div style="font-size:13px;color:var(--text-dim);padding:8px 0">'
-                'ℹ No deeper dimension available for this chart type. '
+                'No deeper dimension available for this chart type. '
                 'Drill-down works on categorical dimensions: '
                 '<strong>region</strong>, <strong>category</strong>, '
                 '<strong>payment method</strong>.'
@@ -547,7 +538,7 @@ with tab_dash:
                 )
             with db_:
                 drill_btn = st.button(
-                    "🔍  Drill In",
+                    "Drill In",
                     use_container_width=True,
                     key="drill_go",
                 )
@@ -585,7 +576,7 @@ with tab_dash:
         if dr:
             st.markdown(
                 f'<div class="drill-card">'
-                f'✓ Drilled into <strong>{dr["label"]}</strong> → '
+                f'Drilled into <strong>{dr["label"]}</strong> → '
                 f'breakdown by <strong>{dr["x"].replace("_"," ").title()}</strong>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -596,12 +587,12 @@ with tab_dash:
 
             dd1, dd2 = st.columns(2)
             with dd1:
-                with st.expander("📄 Drill-Down Data"):
+                with st.expander("Drill-Down Data"):
                     st.dataframe(
                         dr["df"], use_container_width=True, hide_index=True
                     )
             with dd2:
-                with st.expander("🔎 Drill-Down SQL"):
+                with st.expander("Drill-Down SQL"):
                     st.markdown(
                         f'<div class="sql-card">'
                         f'<div class="sql-card-header">SQL Query</div>'
@@ -612,7 +603,7 @@ with tab_dash:
 
         # ── Export & Details ──────────────────────────────────────────────────
         st.markdown(
-            '<div class="section-label"><span>⬇️</span> Export &amp; Details</div>',
+            '<div class="section-label">Export &amp; Details</div>',
             unsafe_allow_html=True,
         )
         if panels:
@@ -620,7 +611,7 @@ with tab_dash:
 
         ex1, ex2 = st.columns(2)
         with ex1:
-            with st.expander("🔎  Generated SQL Query"):
+            with st.expander("Generated SQL Query"):
                 st.markdown(
                     f'<div class="sql-card">'
                     f'<div class="sql-card-header">SQLite · Auto-generated</div>'
@@ -629,7 +620,7 @@ with tab_dash:
                     unsafe_allow_html=True,
                 )
         with ex2:
-            with st.expander("🧠  LLM Decision"):
+            with st.expander("LLM Decision"):
                 m = chart_meta
                 st.table(pd.DataFrame([{
                     "Title"     : m.get("title", ""),
@@ -643,7 +634,7 @@ with tab_dash:
         st.markdown(
             """
             <div class="empty-state">
-              <div class="empty-icon">📊</div>
+              <div class="empty-icon"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
               <div class="empty-title">Your Dashboard Awaits</div>
               <div class="empty-sub">
                 Type a business question above — or click a <strong>Quick Analysis</strong>
@@ -651,11 +642,11 @@ with tab_dash:
                 AI insight, and anomaly detection in seconds.
               </div>
               <div style="margin-top:28px">
-                <span class="chip">📊 Revenue by category</span>
-                <span class="chip">📈 Monthly trends</span>
-                <span class="chip">🌍 Regional analysis</span>
-                <span class="chip">💳 Payment insights</span>
-                <span class="chip">⚠ Spot anomalies</span>
+                <span class="chip">Revenue by category</span>
+                <span class="chip">Monthly trends</span>
+                <span class="chip">Regional analysis</span>
+                <span class="chip">Payment insights</span>
+                <span class="chip">Spot anomalies</span>
               </div>
             </div>
             """,
@@ -676,7 +667,7 @@ with tab_explorer:
         unsafe_allow_html=True,
     )
 
-    with st.expander("🎛️  Filter Controls", expanded=True):
+    with st.expander("Filter Controls", expanded=True):
         fe1, fe2, fe3, fe4 = st.columns(4)
         with fe1:
             sel_cat = st.selectbox(
@@ -713,7 +704,7 @@ with tab_explorer:
     ]
 
     srch = st.text_input(
-        "🔎  Search all columns",
+        "Search all columns",
         placeholder="e.g. Books, Asia, UPI…",
         key="ex_srch",
     )
@@ -745,7 +736,7 @@ with tab_explorer:
         height=460,
     )
     st.download_button(
-        "⬇️  Download Filtered CSV",
+        "Download Filtered CSV",
         data      = flt[sel_cols or list(full_df.columns)].to_csv(index=False).encode(),
         file_name = "filtered_data.csv",
         mime      = "text/csv",

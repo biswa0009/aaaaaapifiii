@@ -35,7 +35,7 @@ def get_layout(dark: bool = False, title: str = "") -> dict:
 
     return dict(
         title         = dict(text=title, font=dict(size=14, color=font), x=0.02),
-        font          = dict(family="Inter, system-ui, sans-serif", size=12, color=font),
+        font          = dict(family="Plus Jakarta Sans, system-ui, sans-serif", size=12, color=font),
         plot_bgcolor  = bg,
         paper_bgcolor = bg,
         hoverlabel    = dict(bgcolor=hover, font_color="white", font_size=13,

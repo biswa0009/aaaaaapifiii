@@ -23,7 +23,7 @@ def csv_download_button(df: pd.DataFrame, filename: str = "query_result.csv") ->
     """Render a Streamlit download button that streams df as CSV."""
     csv_bytes = df.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label     = "⬇️ Download CSV",
+        label     = "Download CSV",
         data      = csv_bytes,
         file_name = filename,
         mime      = "text/csv",
@@ -42,7 +42,7 @@ def png_download_button(fig: go.Figure, filename: str = "chart.png") -> None:
     try:
         img_bytes = fig.to_image(format="png", width=1200, height=600, scale=2)
         st.download_button(
-            label     = "🖼️ Download PNG",
+            label     = "Download PNG",
             data      = img_bytes,
             file_name = filename,
             mime      = "image/png",
@@ -57,7 +57,7 @@ def json_download_button(chart_meta: dict, filename: str = "chart_config.json") 
     """Render a download button for the raw LLM chart metadata JSON."""
     json_str = json.dumps(chart_meta, indent=2).encode("utf-8")
     st.download_button(
-        label     = "📋 Download JSON",
+        label     = "Download JSON",
         data      = json_str,
         file_name = filename,
         mime      = "application/json",
@@ -80,7 +80,7 @@ def render_export_row(
     safe = "".join(c if c.isalnum() or c in " _-" else "" for c in question)
     safe = safe.strip().replace(" ", "_")[:40] or "chart"
 
-    with st.expander("⬇️ Export"):
+    with st.expander("Export"):
         col1, col2, col3 = st.columns(3)
         with col1:
             csv_download_button(df,         filename=f"{safe}.csv")
